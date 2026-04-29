@@ -60,7 +60,7 @@ export const ReviewSection: React.FC<ReviewSectionProps> = ({ targetType, target
 
   const checkCanReview = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/bookings/my', {
+      const res = await fetch('/api/bookings/my', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -88,7 +88,7 @@ export const ReviewSection: React.FC<ReviewSectionProps> = ({ targetType, target
     setSubmitting(true);
     setError('');
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/reviews', {
+      const res = await fetch('/api/reviews', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
