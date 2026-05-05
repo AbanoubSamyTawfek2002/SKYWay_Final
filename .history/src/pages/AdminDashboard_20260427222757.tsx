@@ -1,9 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { useCurrency } from '../contexts/CurrencyContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, Plane, Hotel as HotelIcon, CreditCard, LayoutDashboard } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import { useCurrency } from "../contexts/CurrencyContext";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Users,
+  Plane,
+  Hotel as HotelIcon,
+  CreditCard,
+  LayoutDashboard,
+} from "lucide-react";
 
 export default function AdminDashboard() {
   const { token } = useAuth();
@@ -13,9 +19,12 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await fetch('/api/admin/stats', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/admin/stats`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
         const data = await res.json();
         setStats(data);
       } catch (err) {
@@ -31,7 +40,9 @@ export default function AdminDashboard() {
         <div className="w-12 h-12 bg-primary text-primary-foreground rounded-xl flex items-center justify-center">
           <LayoutDashboard size={24} />
         </div>
-        <h1 className="text-3xl font-black uppercase tracking-tighter">Admin Dashboard</h1>
+        <h1 className="text-3xl font-black uppercase tracking-tighter">
+          Admin Dashboard
+        </h1>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
@@ -97,7 +108,9 @@ export default function AdminDashboard() {
                       <td className="px-6 py-4 font-medium">Admin User</td>
                       <td className="px-6 py-4">Admin</td>
                       <td className="px-6 py-4">2026-04-21</td>
-                      <td className="px-6 py-4"><span className="text-green-600 font-bold">Active</span></td>
+                      <td className="px-6 py-4">
+                        <span className="text-green-600 font-bold">Active</span>
+                      </td>
                     </tr>
                   </tbody>
                 </table>
@@ -106,7 +119,9 @@ export default function AdminDashboard() {
           </Card>
         </TabsContent>
         <TabsContent value="bookings">
-          <p className="text-muted-foreground">Manage all user bookings here.</p>
+          <p className="text-muted-foreground">
+            Manage all user bookings here.
+          </p>
         </TabsContent>
       </Tabs>
     </div>
