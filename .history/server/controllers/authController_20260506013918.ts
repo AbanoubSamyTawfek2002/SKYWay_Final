@@ -22,45 +22,67 @@ const generateOTP = () => {
 export const registerUser = async (req: Request, res: Response) => {
   const { name, email, password, location } = req.body;
 
-  // 1. التحقق من الحقول
+  // 1. التحقق من الحقول الأساسية
   if (!name || !email || !password || !location) {
     return res
       .status(400)
       .json({ message: "Please provide all required fields" });
   }
 
-  // 2. التأكد إن الإيميل مش مسجل
+  // 2. التحقق من صحة الإيميل
+  if (!validator.isEmail(email)) {
+    return res.status(400).json({ message: "Invalid email format" });
+  }
+
+  // 3. التحقق من طول كلمة المرور
+  if (password.length < 6) {
+    return res
+      .status(400)
+      .json({ message: "Password must be at least 6 characters" });
+  }
+
+  // 4. التأكد إن الإيميل مش مسجل قبل كدة
   const userExists = await User.findOne({ email });
   if (userExists) {
     return res.status(400).json({ message: "User already exists" });
   }
 
-  // 3. تشفير كلمة المرور
+  // 5. تشفير كلمة المرور (Security Best Practice)
   const salt = await bcrypt.genSalt(12);
   const hashedPassword = await bcrypt.hash(password, salt);
 
-  // 4. إنشاء الحساب وتفعيله فوراً (isVerified: true)
+  const otp = generateOTP();
+  const otpExpires = new Date(Date.now() + 5 * 60 * 1000); // صلاحية 5 دقائق
+
+  // 6. إنشاء الحساب (غير مفعل مؤقتاً)
   const user = await User.create({
     name,
     email,
     password: hashedPassword,
     location,
-    isVerified: true, // تفعيل مباشر
+    otp,
+    otpExpires,
+    isVerified: false,
   });
 
   if (user) {
-    // 5. تسجيل الدخول فوراً بإرجاع التوكن وبيانات المستخدم
-    res.status(201).json({
-      message: "Registration successful",
-      user: {
-        id: user._id,
-        name: user.name,
+    try {
+      // 7. محاولة إرسال الإيميل
+      const message = `Your SkyWay verification code is: ${otp}\n\nIt expires in 5 minutes.`;
+      await sendEmail({ email, subject: "SkyWay - Verify Account", message });
+
+      res.status(201).json({
+        message: "User registered. Please check email for OTP.",
         email: user.email,
-        role: user.role,
-        location: user.location,
-      },
-      token: generateToken(user._id.toString()),
-    });
+      });
+    } catch (err) {
+      // لو الإيميل متبعتش، بنمسح اليوزر عشان يقدر يحاول تاني بنفس الميل
+      await User.findByIdAndDelete(user._id);
+      console.error("Email failed, user cleaned up:", err);
+      res.status(500).json({
+        message: "Error sending verification email. Please try again.",
+      });
+    }
   } else {
     res.status(400).json({ message: "Invalid user data" });
   }
