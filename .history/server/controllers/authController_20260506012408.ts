@@ -13,7 +13,7 @@ const generateToken = (id: string) => {
   });
 };
 
-/export const registerUser
+// توليد OTP مكون من 6 أرقام
 const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
@@ -22,71 +22,69 @@ const generateOTP = () => {
 export const registerUser = async (req: Request, res: Response) => {
   const { name, email, password, location } = req.body;
 
+  // 1. التحقق من الحقول الأساسية
   if (!name || !email || !password || !location) {
     return res
       .status(400)
       .json({ message: "Please provide all required fields" });
   }
 
+  // 2. التحقق من صحة الإيميل
   if (!validator.isEmail(email)) {
     return res.status(400).json({ message: "Invalid email format" });
   }
 
+  // 3. التحقق من طول كلمة المرور
   if (password.length < 6) {
     return res
       .status(400)
       .json({ message: "Password must be at least 6 characters" });
   }
 
-  // التأكد إن الإيميل مش مسجل قبل كدة
+  // 4. التأكد إن الإيميل مش مسجل قبل كدة
   const userExists = await User.findOne({ email });
   if (userExists) {
     return res.status(400).json({ message: "User already exists" });
   }
 
+  // 5. تشفير كلمة المرور (Security Best Practice)
   const salt = await bcrypt.genSalt(12);
   const hashedPassword = await bcrypt.hash(password, salt);
 
-  // تم إيقاف توليد الـ OTP
-  // const otp = generateOTP();
-  // const otpExpires = new Date(Date.now() + 5 * 60 * 1000); 
+  const otp = generateOTP();
+  const otpExpires = new Date(Date.now() + 5 * 60 * 1000); // صلاحية 5 دقائق
 
-  try {
-    // إنشاء المستخدم وتفعيله مباشرة
-    const user = await User.create({
-      name,
-      email,
-      password: hashedPassword,
-      location,
-      // otp,
-      // otpExpires,
-      isVerified: true, // تم التعديل لتفعيل الحساب فوراً
-    });
+  // 6. إنشاء الحساب (غير مفعل مؤقتاً)
+  const user = await User.create({
+    name,
+    email,
+    password: hashedPassword,
+    location,
+    otp,
+    otpExpires,
+    isVerified: false,
+  });
 
-    if (user) {
-      // تم إيقاف إرسال الإيميل
-      // const message = `Your SkyWay verification code is: ${otp}...`;
-      // await sendEmail({ email, subject: "SkyWay - Verify Account", message });
+  if (user) {
+    try {
+      // 7. محاولة إرسال الإيميل
+      const message = `Your SkyWay verification code is: ${otp}\n\nIt expires in 5 minutes.`;
+      await sendEmail({ email, subject: "SkyWay - Verify Account", message });
 
-      // إرجاع التوكن وبيانات المستخدم عشان يعمل تسجيل دخول تلقائي في الفرونت إند
       res.status(201).json({
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          location: user.location,
-        },
-        token: generateToken(user._id.toString()),
+        message: "User registered. Please check email for OTP.",
+        email: user.email,
       });
-    } else {
-      res.status(400).json({ message: "Invalid user data" });
+    } catch (err) {
+      // لو الإيميل متبعتش، بنمسح اليوزر عشان يقدر يحاول تاني بنفس الميل
+      await User.findByIdAndDelete(user._id);
+      console.error("Email failed, user cleaned up:", err);
+      res.status(500).json({
+        message: "Error sending verification email. Please try again.",
+      });
     }
-  } catch (err) {
-    console.error("Error creating user:", err);
-    res.status(500).json({
-      message: "Error creating account. Please try again.",
-    });
+  } else {
+    res.status(400).json({ message: "Invalid user data" });
   }
 };
 

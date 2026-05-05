@@ -13,12 +13,10 @@ const generateToken = (id: string) => {
   });
 };
 
-/export const registerUser
-const generateOTP = () => {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-};
+// const generateOTP = () => {
+//   return Math.floor(100000 + Math.random() * 900000).toString();
+// };
 
-// --- تسجيل مستخدم جديد ---
 export const registerUser = async (req: Request, res: Response) => {
   const { name, email, password, location } = req.body;
 
@@ -49,7 +47,7 @@ export const registerUser = async (req: Request, res: Response) => {
 
   // تم إيقاف توليد الـ OTP
   // const otp = generateOTP();
-  // const otpExpires = new Date(Date.now() + 5 * 60 * 1000); 
+  // const otpExpires = new Date(Date.now() + 5 * 60 * 1000);
 
   try {
     // إنشاء المستخدم وتفعيله مباشرة
