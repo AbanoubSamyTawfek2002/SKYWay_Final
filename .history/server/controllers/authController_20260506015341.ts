@@ -13,22 +13,27 @@ const generateToken = (id: string) => {
   });
 };
 
+// توليد OTP مكون من 6 أرقام
 const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
+// --- تسجيل مستخدم جديد ---
 export const registerUser = async (req: Request, res: Response) => {
   const { name, email, password, location } = req.body;
+
+  // ... (نفس التحققات من الحقول والإيميل)
 
   const userExists = await User.findOne({ email });
   if (userExists) {
     return res.status(400).json({ message: "User already exists" });
   }
 
+  // متبعثش hashedPassword، ابعت الباسوورد العادي علطول
   const user = await User.create({
     name,
     email,
-    password,
+    password, // الـ Model هيعمل Hash لوحده قبل ما يسيف
     location,
     isVerified: true,
   });
@@ -43,7 +48,7 @@ export const registerUser = async (req: Request, res: Response) => {
     res.status(400).json({ message: "Invalid user data" });
   }
 };
-
+// --- تفعيل الحساب بالـ OTP ---
 export const verifyOTP = async (req: Request, res: Response) => {
   const { email, otp } = req.body;
 
@@ -57,6 +62,7 @@ export const verifyOTP = async (req: Request, res: Response) => {
     return res.status(400).json({ message: "User already verified" });
   }
 
+  // التأكد إن الـ OTP صحيحة ولم تنتهِ صلاحيتها
   if (user.otp !== otp || !user.otpExpires || user.otpExpires < new Date()) {
     return res.status(400).json({ message: "Invalid or expired OTP" });
   }
@@ -83,6 +89,7 @@ export const loginUser = async (req: Request, res: Response) => {
 
   const user: any = await User.findOne({ email });
 
+  // مقارنة الباسوورد المشفرة
   if (user && (await user.comparePassword(password))) {
     if (!user.isVerified) {
       return res.status(401).json({
