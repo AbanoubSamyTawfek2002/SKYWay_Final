@@ -4,12 +4,12 @@ import path from "path";
 import { defineConfig, loadEnv } from "vite";
 
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), "");
+  const env = loadEnv(mode, process.cwd(), ""); // تعديل بسيط لضمان قراءة الملفات
   return {
     plugins: [react(), tailwindcss()],
     define: {
       "process.env.GEMINI_API_KEY": JSON.stringify(env.GEMINI_API_KEY),
-
+      // ضيف دي عشان تقدر تستخدم متغيرات البيئة في الكود بتاعك
       "process.env.VITE_API_URL": JSON.stringify(env.VITE_API_URL),
     },
     resolve: {
