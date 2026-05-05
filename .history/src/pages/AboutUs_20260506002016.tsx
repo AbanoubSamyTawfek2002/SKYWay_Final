@@ -49,7 +49,7 @@ export default function AboutUs() {
             >
               <div className="relative z-10 rounded-[40px] overflow-hidden border-8 border-muted/20 aspect-[4/5]">
                 <img
-                  src="/photo_2025-09-22_16-10-10.jpg"
+                  src="/public/photo_2025-09-22_16-10-10.jpg"
                   alt="Founder"
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-700 grayscale hover:grayscale-0"
                 />

@@ -1,112 +1,86 @@
-import { Request, Response } from "express";
-import jwt from "jsonwebtoken";
-import { User } from "../models/User.js";
-import validator from "validator";
-import sendEmail from "../utils/sendEmail.js";
-import crypto from "crypto";
-import bcrypt from "bcryptjs";
+import { Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
+import { User } from '../models/User.js';
+import validator from 'validator';
+import sendEmail from '../utils/sendEmail.js';
+import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
 
-// توليد Token للجلسة
 const generateToken = (id: string) => {
   return jwt.sign({ id }, process.env.JWT_SECRET as string, {
-    expiresIn: "30d",
+    expiresIn: '30d',
   });
 };
 
-// توليد OTP مكون من 6 أرقام
 const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-// --- تسجيل مستخدم جديد ---
 export const registerUser = async (req: Request, res: Response) => {
   const { name, email, password, location } = req.body;
 
-  // 1. التحقق من الحقول الأساسية
   if (!name || !email || !password || !location) {
-    return res
-      .status(400)
-      .json({ message: "Please provide all required fields" });
+    return res.status(400).json({ message: 'Please provide all required fields' });
   }
 
-  // 2. التحقق من صحة الإيميل
   if (!validator.isEmail(email)) {
-    return res.status(400).json({ message: "Invalid email format" });
+    return res.status(400).json({ message: 'Invalid email format' });
   }
 
-  // 3. التحقق من طول كلمة المرور
   if (password.length < 6) {
-    return res
-      .status(400)
-      .json({ message: "Password must be at least 6 characters" });
+    return res.status(400).json({ message: 'Password must be at least 6 characters' });
   }
 
-  // 4. التأكد إن الإيميل مش مسجل قبل كدة
   const userExists = await User.findOne({ email });
   if (userExists) {
-    return res.status(400).json({ message: "User already exists" });
+    return res.status(400).json({ message: 'User already exists' });
   }
 
-  // 5. تشفير كلمة المرور (Security Best Practice)
-  const salt = await bcrypt.genSalt(12);
-  const hashedPassword = await bcrypt.hash(password, salt);
-
   const otp = generateOTP();
-  const otpExpires = new Date(Date.now() + 5 * 60 * 1000); // صلاحية 5 دقائق
+  const otpExpires = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
-  // 6. إنشاء الحساب (غير مفعل مؤقتاً)
-  const user = await User.create({
-    name,
-    email,
-    password: hashedPassword,
+  const user = await User.create({ 
+    name, 
+    email, 
+    password,
     location,
     otp,
     otpExpires,
-    isVerified: false,
+    isVerified: false
   });
 
   if (user) {
     try {
-      // 7. محاولة إرسال الإيميل
       const message = `Your SkyWay verification code is: ${otp}\n\nIt expires in 5 minutes.`;
-      await sendEmail({ email, subject: "SkyWay - Verify Account", message });
-
-      res.status(201).json({
-        message: "User registered. Please check email for OTP.",
-        email: user.email,
-      });
+      await sendEmail({ email, subject: 'SkyWay - Verify Account', message });
     } catch (err) {
-      // لو الإيميل متبعتش، بنمسح اليوزر عشان يقدر يحاول تاني بنفس الميل
-      await User.findByIdAndDelete(user._id);
-      console.error("Email failed, user cleaned up:", err);
-      res
-        .status(500)
-        .json({
-          message: "Error sending verification email. Please try again.",
-        });
+      console.error('Email could not be sent', err);
     }
+
+    res.status(201).json({
+      message: 'User registered. Please check email for OTP.',
+      email: user.email
+    });
   } else {
-    res.status(400).json({ message: "Invalid user data" });
+    res.status(400).json({ message: 'Invalid user data' });
   }
 };
 
-// --- تفعيل الحساب بالـ OTP ---
 export const verifyOTP = async (req: Request, res: Response) => {
   const { email, otp } = req.body;
 
   const user = await User.findOne({ email });
 
   if (!user) {
-    return res.status(404).json({ message: "User not found" });
+    return res.status(404).json({ message: 'User not found' });
   }
 
   if (user.isVerified) {
-    return res.status(400).json({ message: "User already verified" });
+    return res.status(400).json({ message: 'User already verified' });
   }
 
-  // التأكد إن الـ OTP صحيحة ولم تنتهِ صلاحيتها
   if (user.otp !== otp || !user.otpExpires || user.otpExpires < new Date()) {
-    return res.status(400).json({ message: "Invalid or expired OTP" });
+    return res.status(400).json({ message: 'Invalid or expired OTP' });
   }
 
   user.isVerified = true;
@@ -126,21 +100,14 @@ export const verifyOTP = async (req: Request, res: Response) => {
   });
 };
 
-// --- تسجيل الدخول ---
 export const loginUser = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
   const user: any = await User.findOne({ email });
 
-  // مقارنة الباسوورد المشفرة
   if (user && (await user.comparePassword(password))) {
     if (!user.isVerified) {
-      return res
-        .status(401)
-        .json({
-          message: "Please verify your email address first",
-          needsVerification: true,
-        });
+      return res.status(401).json({ message: 'Please verify your email address first', needsVerification: true });
     }
 
     res.json({
@@ -155,7 +122,7 @@ export const loginUser = async (req: Request, res: Response) => {
       token: generateToken(user._id.toString()),
     });
   } else {
-    res.status(401).json({ message: "Invalid email or password" });
+    res.status(401).json({ message: 'Invalid email or password' });
   }
 };
 
@@ -173,11 +140,11 @@ export const getUserProfile = async (req: any, res: Response) => {
         phone: user.phone,
         dob: user.dob,
         address: user.address,
-        profileImage: user.profileImage,
-      },
+        profileImage: user.profileImage
+      }
     });
   } else {
-    res.status(404).json({ message: "User not found" });
+    res.status(404).json({ message: 'User not found' });
   }
 };
 
@@ -207,25 +174,22 @@ export const updateUserProfile = async (req: any, res: Response) => {
         phone: updatedUser.phone,
         dob: updatedUser.dob,
         address: updatedUser.address,
-        profileImage: updatedUser.profileImage,
-      },
+        profileImage: updatedUser.profileImage
+      }
     });
   } else {
-    res.status(404).json({ message: "User not found" });
+    res.status(404).json({ message: 'User not found' });
   }
 };
 
 // Rate limiting map for forgot password
-const forgotPasswordLimits = new Map<
-  string,
-  { count: number; firstRequestTime: number }
->();
+const forgotPasswordLimits = new Map<string, { count: number; firstRequestTime: number }>();
 
 export const forgotPassword = async (req: Request, res: Response) => {
   const { email } = req.body;
 
   if (!email) {
-    return res.status(400).json({ message: "Please provide an email" });
+    return res.status(400).json({ message: 'Please provide an email' });
   }
 
   // Rate limiting check
@@ -236,9 +200,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
   if (userLimit) {
     if (now - userLimit.firstRequestTime < ONE_HOUR) {
       if (userLimit.count >= 3) {
-        return res
-          .status(429)
-          .json({ message: "Too many requests. Please try again later." });
+        return res.status(429).json({ message: 'Too many requests. Please try again later.' });
       }
       userLimit.count++;
     } else {
@@ -252,9 +214,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
   const user = await User.findOne({ email });
 
   if (!user) {
-    return res
-      .status(404)
-      .json({ message: "No account found with this email" });
+    return res.status(404).json({ message: 'No account found with this email' });
   }
 
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -307,47 +267,35 @@ export const forgotPassword = async (req: Request, res: Response) => {
         
       </div>
     `;
-    await sendEmail({
-      email,
-      subject: "SkyWay Travel — Your Password Reset Code",
-      message: plainMessage,
-      html: htmlMessage,
-    });
+    await sendEmail({ email, subject: 'SkyWay Travel — Your Password Reset Code', message: plainMessage, html: htmlMessage });
   } catch (err) {
-    console.error("Email could not be sent", err);
+    console.error('Email could not be sent', err);
     user.otpCode = null as any;
     user.otpExpiry = null as any;
     await user.save();
-    return res.status(500).json({ message: "Email could not be sent" });
+    return res.status(500).json({ message: 'Email could not be sent' });
   }
 
-  res.status(200).json({ message: "OTP sent to your email" });
+  res.status(200).json({ message: 'OTP sent to your email' });
 };
 
 export const verifyForgotPasswordOTP = async (req: Request, res: Response) => {
   const { email, otpCode } = req.body;
 
   if (!email || !otpCode) {
-    return res
-      .status(400)
-      .json({ message: "Please provide email and OTP code" });
+    return res.status(400).json({ message: 'Please provide email and OTP code' });
   }
 
   const user = await User.findOne({ email });
 
-  if (
-    !user ||
-    user.otpCode !== otpCode ||
-    !user.otpExpiry ||
-    user.otpExpiry.getTime() < Date.now()
-  ) {
-    return res.status(400).json({ message: "Invalid or expired OTP" });
+  if (!user || user.otpCode !== otpCode || !user.otpExpiry || user.otpExpiry.getTime() < Date.now()) {
+    return res.status(400).json({ message: 'Invalid or expired OTP' });
   }
 
   user.otpCode = null as any;
   user.otpExpiry = null as any;
-
-  const resetToken = crypto.randomBytes(32).toString("hex");
+  
+  const resetToken = crypto.randomBytes(32).toString('hex');
   user.resetToken = resetToken;
   user.resetTokenExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
 
@@ -360,33 +308,29 @@ export const resetPassword = async (req: Request, res: Response) => {
   const { resetToken, newPassword } = req.body;
 
   if (!resetToken || !newPassword) {
-    return res
-      .status(400)
-      .json({ message: "Please provide reset token and new password" });
+    return res.status(400).json({ message: 'Please provide reset token and new password' });
   }
 
   if (newPassword.length < 8) {
-    return res
-      .status(400)
-      .json({ message: "Password must be at least 8 characters" });
+    return res.status(400).json({ message: 'Password must be at least 8 characters' });
   }
 
   // 1. Find user by valid, non-expired reset token
   const user = await User.findOne({
     resetToken: resetToken,
-    resetTokenExpiry: { $gt: new Date() },
+    resetTokenExpiry: { $gt: new Date() }
   });
 
   if (!user) {
-    return res.status(400).json({
-      message: "Reset token is invalid or has expired",
+    return res.status(400).json({ 
+      message: 'Reset token is invalid or has expired' 
     });
   }
 
   // 2. Hash the new password
   const hashedPassword = await bcrypt.hash(newPassword, 12);
 
-  console.log("Updating password for user:", user._id);
+  console.log('Updating password for user:', user._id);
 
   // 3. Update using findOneAndUpdate to guarantee DB write
   await User.findOneAndUpdate(
@@ -398,15 +342,15 @@ export const resetPassword = async (req: Request, res: Response) => {
         resetToken: null,
         resetTokenExpiry: null,
         otpCode: null,
-        otpExpiry: null,
-      },
+        otpExpiry: null
+      }
     },
-    { new: true },
+    { new: true }
   );
 
-  console.log("Password update complete");
+  console.log('Password update complete');
 
-  return res.status(200).json({
-    message: "Password updated successfully",
+  return res.status(200).json({ 
+    message: 'Password updated successfully' 
   });
 };
