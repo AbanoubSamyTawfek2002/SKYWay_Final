@@ -37,7 +37,7 @@ const sendEmail = async (options: {
     transporter = nodemailer.createTransport({
       host: "smtp.ethereal.email",
       port: 587,
-      secure: true,
+      secure: false,
       auth: {
         user: testAccount.user,
         pass: testAccount.pass,
