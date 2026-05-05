@@ -101,14 +101,14 @@ export const Navbar: React.FC = () => {
               {t("journal")}
             </NavLink>
             <NavLink
-              to="/about"
+              to="/journals"
               className={({ isActive }) =>
                 isActive
                   ? "text-primary"
                   : "text-muted-foreground hover:text-primary transition-colors"
               }
             >
-              {t("About Us")}
+              {t("journal")}
             </NavLink>
           </div>
         </div>
@@ -242,12 +242,6 @@ export const Navbar: React.FC = () => {
                     className="text-xl font-black uppercase tracking-widest hover:text-primary transition-colors"
                   >
                     {t("journal")}
-                  </NavLink>
-                  <NavLink
-                    to="/about"
-                    className="text-xl font-black uppercase tracking-widest hover:text-primary transition-colors"
-                  >
-                    {t("About Us")}
                   </NavLink>
                   {user && (
                     <NavLink

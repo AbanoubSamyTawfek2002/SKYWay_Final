@@ -298,7 +298,7 @@ function AppRoutes() {
         </div>
         <div className="container mx-auto mt-20 py-12 border-t border-border flex flex-col md:flex-row justify-between items-center gap-8">
           <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground italic text-center md:text-left">
-            © 2026 SkyWay Travel Fleet. All rights reserved. | Designed &
+            © © 2026 SkyWay Travel Fleet. All rights reserved. | Designed &
             Developed by Abanoub Samy .
           </p>
           <div className="flex flex-wrap justify-center gap-8 text-[10px] font-bold uppercase tracking-widest text-muted-foreground italic">

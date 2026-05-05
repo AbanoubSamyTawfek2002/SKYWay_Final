@@ -243,12 +243,6 @@ export const Navbar: React.FC = () => {
                   >
                     {t("journal")}
                   </NavLink>
-                  <NavLink
-                    to="/about"
-                    className="text-xl font-black uppercase tracking-widest hover:text-primary transition-colors"
-                  >
-                    {t("About Us")}
-                  </NavLink>
                   {user && (
                     <NavLink
                       to="/wishlist"

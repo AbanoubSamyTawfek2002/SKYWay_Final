@@ -77,8 +77,29 @@ export default function AboutUs() {
                 planning and enjoying myself, and that's how SkyWay was born."
               </p>
               <p className="text-muted-foreground text-lg italic mb-8 font-bold">
-                Designed by Abanoub Samy
+                Abanoub Samy Founder & CEO
               </p>
+
+              <div className="flex gap-4">
+                <a
+                  href="#"
+                  className="p-3 bg-muted rounded-full hover:bg-primary hover:text-white transition-colors"
+                >
+                  <Linkedin size={20} />
+                </a>
+                <a
+                  href="#"
+                  className="p-3 bg-muted rounded-full hover:bg-primary hover:text-white transition-colors"
+                >
+                  <Twitter size={20} />
+                </a>
+                <a
+                  href="#"
+                  className="p-3 bg-muted rounded-full hover:bg-primary hover:text-white transition-colors"
+                >
+                  <Instagram size={20} />
+                </a>
+              </div>
             </motion.div>
           </div>
         </div>

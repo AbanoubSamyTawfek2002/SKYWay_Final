@@ -77,7 +77,7 @@ export default function AboutUs() {
                 planning and enjoying myself, and that's how SkyWay was born."
               </p>
               <p className="text-muted-foreground text-lg italic mb-8 font-bold">
-                Designed by Abanoub Samy
+                Abanoub Samy Founder & CEO
               </p>
             </motion.div>
           </div>

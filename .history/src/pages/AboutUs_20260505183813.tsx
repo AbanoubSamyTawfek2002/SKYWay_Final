@@ -50,7 +50,7 @@ export default function AboutUs() {
               <div className="relative z-10 rounded-[40px] overflow-hidden border-8 border-muted/20 aspect-[4/5]">
                 {/* ضع رابط صورتك هنا مكان src */}
                 <img
-                  src="/public/photo_2025-09-22_16-10-10.jpg"
+                  src="//public/photo_2025-09-22_16-10-10.jpg"
                   alt="Founder"
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-700 grayscale hover:grayscale-0"
                 />
@@ -72,13 +72,34 @@ export default function AboutUs() {
                 <span className="text-primary">SkyWay</span>
               </h2>
               <p className="text-muted-foreground text-lg italic leading-relaxed mb-6">
-                "The journey began with a simple idea: travel doesn't have to be
-                stressful. As a frequent traveler, I felt the gap between
-                planning and enjoying myself, and that's how SkyWay was born."
+                "بدأت الرحلة بفكرة بسيطة: السفر لا يجب أن يكون مرهقاً. بصفتي
+                مسافراً دائماً، شعرت بالفجوة بين التخطيط والاستمتاع، ومن هنا
+                ولدت SkyWay."
               </p>
               <p className="text-muted-foreground text-lg italic mb-8 font-bold">
-                Designed by Abanoub Samy
+                — اسمك هنا، Founder & CEO
               </p>
+
+              <div className="flex gap-4">
+                <a
+                  href="#"
+                  className="p-3 bg-muted rounded-full hover:bg-primary hover:text-white transition-colors"
+                >
+                  <Linkedin size={20} />
+                </a>
+                <a
+                  href="#"
+                  className="p-3 bg-muted rounded-full hover:bg-primary hover:text-white transition-colors"
+                >
+                  <Twitter size={20} />
+                </a>
+                <a
+                  href="#"
+                  className="p-3 bg-muted rounded-full hover:bg-primary hover:text-white transition-colors"
+                >
+                  <Instagram size={20} />
+                </a>
+              </div>
             </motion.div>
           </div>
         </div>

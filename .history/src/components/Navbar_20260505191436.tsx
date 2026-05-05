@@ -245,7 +245,11 @@ export const Navbar: React.FC = () => {
                   </NavLink>
                   <NavLink
                     to="/about"
-                    className="text-xl font-black uppercase tracking-widest hover:text-primary transition-colors"
+                    className={({ isActive }) =>
+                      isActive
+                        ? "text-primary"
+                        : "text-muted-foreground hover:text-primary transition-colors"
+                    }
                   >
                     {t("About Us")}
                   </NavLink>
