@@ -1,14 +1,9 @@
-import nodemailer from "nodemailer";
+import nodemailer from 'nodemailer';
 
-const sendEmail = async (options: {
-  email: string;
-  subject: string;
-  message: string;
-  html?: string;
-}) => {
+const sendEmail = async (options: { email: string; subject: string; message: string; html?: string }) => {
   let transporter;
   let useEthereal = false;
-
+  
   if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
     try {
       transporter = nodemailer.createTransport({
@@ -24,7 +19,7 @@ const sendEmail = async (options: {
       await transporter.verify();
     } catch (error: any) {
       console.error(`[SMTP ERROR] Custom SMTP failed: ${error.message}`);
-      console.log("Falling back to Ethereal Mail for testing.");
+      console.log('Falling back to Ethereal Mail for testing.');
       useEthereal = true;
     }
   } else {
@@ -37,19 +32,17 @@ const sendEmail = async (options: {
     transporter = nodemailer.createTransport({
       host: "smtp.ethereal.email",
       port: 587,
-      secure: true,
+      secure: false, 
       auth: {
         user: testAccount.user,
         pass: testAccount.pass,
       },
     });
-    console.log(
-      "Using Ethereal for email testing (no real SMTP provided or auth failed). Check logs for email preview URL.",
-    );
+    console.log('Using Ethereal for email testing (no real SMTP provided or auth failed). Check logs for email preview URL.');
   }
 
   const message = {
-    from: `${process.env.FROM_NAME || "SkyWay"} <${process.env.FROM_EMAIL || "noreply@skyway.com"}>`,
+    from: `${process.env.FROM_NAME || 'SkyWay'} <${process.env.FROM_EMAIL || 'noreply@skyway.com'}>`,
     to: options.email,
     subject: options.subject,
     text: options.message,
@@ -57,9 +50,9 @@ const sendEmail = async (options: {
   };
 
   const info = await transporter!.sendMail(message);
-
+  
   if (useEthereal) {
-    console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
+    console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
   }
 };
 
