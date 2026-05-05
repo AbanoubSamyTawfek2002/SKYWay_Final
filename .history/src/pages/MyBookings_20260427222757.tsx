@@ -40,7 +40,7 @@ export default function UserDashboard() {
   const fetchBookings = async () => {
     setLoadingBookings(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/bookings/my', {
+      const res = await fetch('/api/bookings/my', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
@@ -54,7 +54,7 @@ export default function UserDashboard() {
 
   const fetchProfile = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/me', {
+      const res = await fetch('/api/auth/me', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
@@ -95,7 +95,7 @@ export default function UserDashboard() {
     e.preventDefault();
     setSavingProfile(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/me', {
+      const res = await fetch('/api/auth/me', {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',

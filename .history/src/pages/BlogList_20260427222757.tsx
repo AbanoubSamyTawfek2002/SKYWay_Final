@@ -13,7 +13,7 @@ export default function BlogList() {
   useEffect(() => {
     const fetchBlogs = async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/blogs');
+        const res = await fetch('/api/blogs');
         if (!res.ok) {
           setBlogs([]);
           return;

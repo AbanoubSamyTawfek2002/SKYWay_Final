@@ -44,7 +44,7 @@ const CheckoutForm = ({ amount, bookingData }: any) => {
       await new Promise(resolve => setTimeout(resolve, 2000));
       const fakePaymentIntentId = "pi_mock_" + Math.random().toString(36).substring(7);
 
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/bookings', {
+      const res = await fetch('/api/bookings', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

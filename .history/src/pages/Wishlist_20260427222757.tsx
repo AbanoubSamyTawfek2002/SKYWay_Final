@@ -29,7 +29,7 @@ export default function Wishlist() {
 
   const fetchWishlist = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/wishlist', {
+      const res = await fetch('/api/wishlist', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
