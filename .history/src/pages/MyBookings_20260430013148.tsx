@@ -98,10 +98,13 @@ export default function UserDashboard() {
   const handleCancelBooking = async (id: string) => {
     if (!confirm("Are you sure you want to cancel this booking?")) return;
     try {
-      const res = await fetch(`/api/bookings/${id}/cancel`, {
-        method: "PUT",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/bookings/${id}/cancel`,
+        {
+          method: "PUT",
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
       if (res.ok) {
         toast.success("Booking cancelled successfully");
         fetchBookings();

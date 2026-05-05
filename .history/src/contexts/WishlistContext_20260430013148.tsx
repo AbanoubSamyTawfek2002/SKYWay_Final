@@ -122,10 +122,13 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!item) return;
 
     try {
-      const res = await fetch(`/api/wishlist/${item._id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/wishlist/${item._id}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
       if (res.ok) {
         setWishlistIds((prev) => prev.filter((i) => i._id !== item._id));
       }

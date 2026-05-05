@@ -50,7 +50,9 @@ export const ReviewSection: React.FC<ReviewSectionProps> = ({
 
   const fetchReviews = async () => {
     try {
-      const res = await fetch(`/api/reviews/${targetType}/${targetId}`);
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/reviews/${targetType}/${targetId}`,
+      );
       if (res.ok) {
         const data = await res.json();
         setReviews(Array.isArray(data) ? data : []);
@@ -139,10 +141,13 @@ export const ReviewSection: React.FC<ReviewSectionProps> = ({
     if (!window.confirm("Are you sure you want to delete this review?")) return;
 
     try {
-      const res = await fetch(`/api/reviews/${reviewId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/reviews/${reviewId}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
 
       if (res.ok) {
         const updatedReviews = reviews.filter((r) => r._id !== reviewId);

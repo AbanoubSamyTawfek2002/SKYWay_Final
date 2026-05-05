@@ -52,10 +52,13 @@ export default function Wishlist() {
 
   const removeFromWishlist = async (id: string) => {
     try {
-      const res = await fetch(`/api/wishlist/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/wishlist/${id}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
       if (res.ok) {
         setItems(items.filter((i) => i._id !== id));
         toast.success("Removed from wishlist");
