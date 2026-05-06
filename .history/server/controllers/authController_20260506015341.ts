@@ -6,34 +6,28 @@ import sendEmail from "../utils/sendEmail.js";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 
-// توليد Token للجلسة
 const generateToken = (id: string) => {
   return jwt.sign({ id }, process.env.JWT_SECRET as string, {
     expiresIn: "30d",
   });
 };
 
-// توليد OTP مكون من 6 أرقام
 const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-// --- تسجيل مستخدم جديد ---
 export const registerUser = async (req: Request, res: Response) => {
   const { name, email, password, location } = req.body;
-
-  // ... (نفس التحققات من الحقول والإيميل)
 
   const userExists = await User.findOne({ email });
   if (userExists) {
     return res.status(400).json({ message: "User already exists" });
   }
 
-  // متبعثش hashedPassword، ابعت الباسوورد العادي علطول
   const user = await User.create({
     name,
     email,
-    password, // الـ Model هيعمل Hash لوحده قبل ما يسيف
+    password,
     location,
     isVerified: true,
   });
@@ -48,7 +42,7 @@ export const registerUser = async (req: Request, res: Response) => {
     res.status(400).json({ message: "Invalid user data" });
   }
 };
-// --- تفعيل الحساب بالـ OTP ---
+
 export const verifyOTP = async (req: Request, res: Response) => {
   const { email, otp } = req.body;
 
@@ -62,7 +56,6 @@ export const verifyOTP = async (req: Request, res: Response) => {
     return res.status(400).json({ message: "User already verified" });
   }
 
-  // التأكد إن الـ OTP صحيحة ولم تنتهِ صلاحيتها
   if (user.otp !== otp || !user.otpExpires || user.otpExpires < new Date()) {
     return res.status(400).json({ message: "Invalid or expired OTP" });
   }
@@ -89,7 +82,6 @@ export const loginUser = async (req: Request, res: Response) => {
 
   const user: any = await User.findOne({ email });
 
-  // مقارنة الباسوورد المشفرة
   if (user && (await user.comparePassword(password))) {
     if (!user.isVerified) {
       return res.status(401).json({
@@ -170,7 +162,6 @@ export const updateUserProfile = async (req: any, res: Response) => {
   }
 };
 
-// Rate limiting map for forgot password
 const forgotPasswordLimits = new Map<
   string,
   { count: number; firstRequestTime: number }
@@ -183,7 +174,6 @@ export const forgotPassword = async (req: Request, res: Response) => {
     return res.status(400).json({ message: "Please provide an email" });
   }
 
-  // Rate limiting check
   const now = Date.now();
   const ONE_HOUR = 60 * 60 * 1000;
   let userLimit = forgotPasswordLimits.get(email);
@@ -326,7 +316,6 @@ export const resetPassword = async (req: Request, res: Response) => {
       .json({ message: "Password must be at least 8 characters" });
   }
 
-  // 1. Find user by valid, non-expired reset token
   const user = await User.findOne({
     resetToken: resetToken,
     resetTokenExpiry: { $gt: new Date() },
@@ -338,12 +327,10 @@ export const resetPassword = async (req: Request, res: Response) => {
     });
   }
 
-  // 2. Hash the new password
   const hashedPassword = await bcrypt.hash(newPassword, 12);
 
   console.log("Updating password for user:", user._id);
 
-  // 3. Update using findOneAndUpdate to guarantee DB write
   await User.findOneAndUpdate(
     { _id: user._id },
     {

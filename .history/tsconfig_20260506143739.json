@@ -11,12 +11,16 @@
     "moduleDetection": "force",
     "allowJs": true,
     "jsx": "react-jsx",
+
     "paths": {
       "@/*": ["./src/*"]
     },
+
     "types": ["vite/client"],
+
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
+
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.d.ts"]
 }

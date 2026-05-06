@@ -31,8 +31,6 @@ import {
 import { TravelerReviews } from "../components/TravelerReviews";
 import { calculateHotelPrice } from "../lib/hotelPricing";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "";
-
 const CheckoutForm = ({ amount, bookingData }: any) => {
   const { t } = useTranslation();
   const { token } = useAuth();
@@ -71,7 +69,7 @@ const CheckoutForm = ({ amount, bookingData }: any) => {
       const fakePaymentIntentId =
         "pi_mock_" + Math.random().toString(36).substring(7);
 
-      const res = await fetch(`${API_BASE_URL}/api/bookings`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/bookings`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -101,6 +99,7 @@ const CheckoutForm = ({ amount, bookingData }: any) => {
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
+        console.error("Backend error response:", errorData);
         throw new Error(
           errorData.message || "Failed to create booking on backend.",
         );
@@ -119,9 +118,9 @@ const CheckoutForm = ({ amount, bookingData }: any) => {
           createdBooking: booking,
         },
       });
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      setError(err.message || "Payment simulation failed.");
+      setError("Payment simulation failed.");
     } finally {
       setProcessing(false);
     }
@@ -219,7 +218,7 @@ export default function Checkout() {
       timeoutId = setTimeout(() => {
         setLoadError(true);
         setLoading(false);
-      }, 8000); // زيادة المهلة قليلاً لضمان التحميل من سيرفر Render
+      }, 5000);
     }
     return () => clearTimeout(timeoutId);
   }, [loading]);
@@ -235,14 +234,12 @@ export default function Checkout() {
     const fetchItem = async () => {
       try {
         const roomsParam = searchParams.get("rooms");
-
-        // التعديل الجوهري: إضافة الـ API_BASE_URL لجميع الطلبات
         let endpoint =
           type === "hotel"
-            ? `${API_BASE_URL}/api/hotels/${id}`
+            ? `/api/hotels/${id}`
             : type === "flight"
-              ? `${API_BASE_URL}/api/flights/${id}`
-              : `${API_BASE_URL}/api/cars/${id}`;
+              ? `/api/flights/${id}`
+              : `/api/cars/${id}`;
 
         if (type === "hotel" && roomsParam) {
           endpoint += `?rooms=${encodeURIComponent(roomsParam)}`;
@@ -316,7 +313,6 @@ export default function Checkout() {
           setItem(data);
         } else {
           setItem(null);
-          setLoadError(true);
         }
       } catch (err) {
         console.error(err);
@@ -326,7 +322,7 @@ export default function Checkout() {
       }
     };
     fetchItem();
-  }, [type, id, stateBookingData, searchParams]);
+  }, [type, id, stateBookingData]);
 
   if (loading)
     return (
@@ -376,6 +372,9 @@ export default function Checkout() {
         new Date(pickupDate),
         new Date(dropoffDate),
       );
+      console.log(
+        `[Car Checkout] pickupDate=${pickupDate}, dropoffDate=${dropoffDate}, duration=${days}`,
+      );
       basePrice = calculateCarTotalPrice(item.pricePerDay, days);
       durationText = `(x${days} days)`;
     } else if (resolvedBookingData?.durationDays) {
@@ -385,7 +384,7 @@ export default function Checkout() {
         calculateCarTotalPrice(item.pricePerDay, days);
       durationText = `(x${days} days)`;
     } else {
-      basePrice = item.pricePerDay;
+      basePrice = item.pricePerDay; // default 1 day fallback
       durationText = `(x1 day)`;
     }
   } else if (actualType === "hotel") {
@@ -396,11 +395,12 @@ export default function Checkout() {
       category: item.category?.toLowerCase() || "standard",
     });
     hotelPricingBreakdown = hotelPricing.breakdown;
-    basePrice = hotelPricing.subtotal;
+    basePrice = hotelPricing.subtotal; // Before taxes
     durationText = resolvedBookingData?.durationDays
       ? `(x${resolvedBookingData.durationDays} nights)`
       : `(x1 nights)`;
   } else {
+    // Flight
     flightPricing = calculateExactUserFormula(
       item.price,
       { adults, children, infants },
@@ -423,8 +423,23 @@ export default function Checkout() {
       ? flightPricing.total / 100
       : basePrice + surcharge;
 
+  if (actualType === "hotel") {
+    console.log({
+      basePricePerNight: hotelPricingBreakdown
+        ? hotelPricingBreakdown.basePrice /
+          hotelPricingBreakdown.roomsCount /
+          (resolvedBookingData?.durationDays || 1)
+        : item.pricePerNight,
+      nights: resolvedBookingData?.durationDays || 1,
+      rooms: hotelPricingBreakdown ? hotelPricingBreakdown.roomsCount : 1,
+      guests: hotelPricingBreakdown ? hotelPricingBreakdown.totalGuests : 1,
+      totalPrice: totalAmount,
+    });
+  }
+
   return (
     <div className="container mx-auto px-4 sm:px-10 py-12 sm:py-20 flex flex-col lg:flex-row gap-12 sm:gap-20 justify-center">
+      {/* Booking Summary */}
       <div className="w-full lg:w-1/2 space-y-10">
         <div className="space-y-6">
           <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary font-black uppercase tracking-widest text-[10px] italic">
@@ -498,7 +513,7 @@ export default function Checkout() {
                 <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block italic">
                   Reference
                 </span>
-                <p className="font-black italic uppercase">
+                <p className="font-black italic uppercase italic">
                   {actualType === "hotel"
                     ? "Luxe Property"
                     : actualType === "car"
@@ -572,12 +587,26 @@ export default function Checkout() {
                         Base Price {durationText}
                       </span>
                       <span>
-                        {formatPrice(hotelPricingBreakdown?.basePrice || 0)}
+                        {formatPrice(
+                          hotelPricingBreakdown?.basePrice ||
+                            item.pricePerNight *
+                              (resolvedBookingData?.durationDays || 1),
+                        )}
                       </span>
                     </div>
+                    {hotelPricingBreakdown?.extraGuestsPrice > 0 && (
+                      <div className="flex justify-between items-center text-sm italic font-medium">
+                        <span className="text-muted-foreground">
+                          Extra Guests Price {durationText}
+                        </span>
+                        <span>
+                          {formatPrice(hotelPricingBreakdown.extraGuestsPrice)}
+                        </span>
+                      </div>
+                    )}
                     <div className="flex justify-between items-center text-sm italic font-medium">
                       <span className="text-muted-foreground">
-                        Premium Surcharge & Taxes
+                        Premium Surcharge & Taxes (15%)
                       </span>
                       <span>{formatPrice(surcharge)}</span>
                     </div>
@@ -586,7 +615,14 @@ export default function Checkout() {
                   <>
                     <div className="flex justify-between items-center text-sm italic font-medium">
                       <span className="text-muted-foreground">
-                        Standard Rate {durationText}
+                        {actualType === "car"
+                          ? `Total for ${durationText.match(/\d+/) ? durationText.match(/\d+/)?.[0] : 1} days`
+                          : `Standard Rate ${durationText}`}
+                        {actualType === "car" && (
+                          <span className="block text-xs mt-1">
+                            {formatPrice(item.pricePerDay)} / day
+                          </span>
+                        )}
                       </span>
                       <span>{formatPrice(basePrice)}</span>
                     </div>
@@ -602,18 +638,39 @@ export default function Checkout() {
                   <span className="text-xl font-black uppercase tracking-tighter italic">
                     Total Amount
                   </span>
-                  <span className="text-4xl font-black italic tracking-tighter text-primary underline underline-offset-8 decoration-4">
-                    {formatPrice(totalAmount)}
-                  </span>
+                  <div className="flex flex-col items-end">
+                    <span className="text-4xl font-black italic tracking-tighter text-primary underline underline-offset-8 decoration-4 leading-none">
+                      {formatPrice(totalAmount)}
+                    </span>
+                    {actualType === "car" && (
+                      <span className="text-xs font-bold text-muted-foreground mt-2 italic uppercase">
+                        total
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
+
+            <div className="p-8 bg-primary/5 rounded-[30px] border-2 border-dashed border-primary/20 space-y-4">
+              <h5 className="font-black uppercase italic tracking-tighter text-primary">
+                SkyWay Protection Included
+              </h5>
+              <p className="text-[10px] leading-relaxed italic text-muted-foreground font-medium">
+                This transaction is covered by our elite travel insurance,
+                guaranteeing 100% reimbursement in case of institutional
+                cancellations.
+              </p>
+            </div>
           </CardContent>
         </Card>
+
+        {actualType === "flight" && <TravelerReviews flight={item} />}
       </div>
 
+      {/* Payment Form */}
       <div className="w-full lg:w-1/2 mt-10 lg:mt-32">
-        <Card className="rounded-[40px] shadow-2xl border-none overflow-hidden bg-card">
+        <Card className="rounded-[40px] shadow-[0_48px_96px_-12px_rgba(0,0,0,0.14)] dark:shadow-[0_48px_96px_-12px_rgba(0,0,0,0.5)] border-none overflow-hidden bg-card">
           <CardHeader className="p-12 text-center space-y-4">
             <CardTitle className="text-4xl font-black uppercase italic tracking-tighter">
               Cipher Payment
@@ -648,6 +705,27 @@ export default function Checkout() {
                 },
               }}
             />
+
+            <div className="mt-12 flex flex-col items-center gap-6">
+              <div className="flex gap-4 grayscale opacity-30">
+                <img
+                  src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg"
+                  className="h-6 w-auto"
+                />
+                <img
+                  src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg"
+                  className="h-8 w-auto"
+                />
+                <img
+                  src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg"
+                  className="h-6 w-auto"
+                />
+              </div>
+              <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2 italic">
+                <ShieldCheck size={14} className="text-primary" /> End-to-End
+                Encrypted Gateway
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>
