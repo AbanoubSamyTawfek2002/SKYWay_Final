@@ -32,10 +32,6 @@ import { TravelerReviews } from "../components/TravelerReviews";
 import { calculateHotelPrice } from "../lib/hotelPricing";
 // ✅ اكتب السطر ده هنا بالظبط
 const API_BASE_URL = import.meta.env.VITE_API_URL || "";
-
-const CheckoutForm = ({ amount, bookingData }: any) => {
-  // ... باقي الكود
-
 const CheckoutForm = ({ amount, bookingData }: any) => {
   const { t } = useTranslation();
   const { token } = useAuth();
@@ -239,16 +235,16 @@ export default function Checkout() {
     const fetchItem = async () => {
       try {
         const roomsParam = searchParams.get("rooms");
-       let endpoint =
-      type === "hotel"
-        ? `${API_BASE_URL}/api/hotels/${id}`
-        : type === "flight"
-          ? `${API_BASE_URL}/api/flights/${id}`
-          : `${API_BASE_URL}/api/cars/${id}`;
+        let endpoint =
+          type === "hotel"
+            ? `${API_BASE_URL}/api/hotels/${id}`
+            : type === "flight"
+              ? `${API_BASE_URL}/api/flights/${id}`
+              : `${API_BASE_URL}/api/cars/${id}`;
 
-    if (type === "hotel" && roomsParam) {
-      endpoint += `?rooms=${encodeURIComponent(roomsParam)}`;
-    }
+        if (type === "hotel" && roomsParam) {
+          endpoint += `?rooms=${encodeURIComponent(roomsParam)}`;
+        }
 
         const res = await fetch(endpoint);
         if (res.ok) {
